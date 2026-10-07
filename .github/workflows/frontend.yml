@@ -100,5 +100,5 @@ jobs:
       - name: Verify Dist Content (No Rebuild)
         run: |
           echo "=== Memverifikasi Artifact Build Frontend ==="
-          ls -la frontend/dist
+          ls -la dist
           echo "Deploy frontend simulated successfully from artifact without rebuilding."
