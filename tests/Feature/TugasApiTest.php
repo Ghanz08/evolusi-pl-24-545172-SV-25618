@@ -20,10 +20,8 @@ class TugasApiTest extends TestCase
 
         $response = $this->getJson('/api/tugas');
 
-        $response->assertStatus(200)
-            ->assertJsonFragment([
-                'judul' => 'Belajar CI/CD',
-            ]);
+        // Sengaja digagalkan untuk membuktikan pipeline merah (Tugas 2 syarat 5)
+        $response->assertStatus(500);
     }
 
     public function test_can_create_tugas(): void
