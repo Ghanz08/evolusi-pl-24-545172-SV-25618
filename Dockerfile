@@ -1,6 +1,8 @@
-FROM php:8.2-cli
+# ==========================================
+# STAGE 1: BUILDER (Full Toolchain & Composer)
+# ==========================================
+FROM php:8.2-cli AS builder
 
-# Pasang dependensi sistem dan ekstensi PHP yang dibutuhkan Laravel
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -8,33 +10,44 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo pdo_sqlite \
     && rm -rf /var/lib/apt/lists/*
 
-# Pasang Composer resmi
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.8.9 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+
+COPY . .
+RUN composer dump-autoload --optimize --no-dev
+
+# ==========================================
+# STAGE 2: RUNNER (Alpine Minimalist Runtime)
+# ==========================================
+FROM php:8.2-cli-alpine
+
+# Pasang curl untuk HEALTHCHECK dan library sqlite3 runtime
+RUN apk add --no-cache curl sqlite-libs
 
 WORKDIR /var/www/html
 
-# LANGKAH OPTIMASI CACHE: Salin konfigurasi dependensi terlebih dahulu
-COPY composer.json composer.lock ./
+# Salin seluruh artefak aplikasi & vendor yang sudah siap dari builder
+COPY --from=builder /app /var/www/html
 
-# Install dependensi PHP sebelum menyalin source code aplikasi
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
-
-# Salin seluruh source code aplikasi
-COPY . .
-
-# Generate autoloader final setelah source code tersedia
-RUN composer dump-autoload --optimize --no-dev
-
-# Setup permission folder storage dan bootstrap cache
+# Setup direktori dan izin akses untuk user non-root www-data (UID 82 di Alpine)
 RUN mkdir -p database storage/framework/cache storage/framework/sessions storage/framework/views storage/logs \
     && touch database/database.sqlite \
-    && chown -R www-data:www-data storage bootstrap/cache database \
+    && php -r "file_exists('.env') || copy('.env.example', '.env');" \
+    && php artisan key:generate --force \
+    && php artisan migrate --force \
+    && chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache database
 
-# Inisialisasi database dan key default jika belum ada
-RUN php -r "file_exists('.env') || copy('.env.example', '.env');" \
-    && php artisan key:generate --force \
-    && php artisan migrate --force
+# SYARAT KEAMANAN: Berjalan sebagai user non-root
+USER www-data
+
+# SYARAT HEALTHCHECK: Cek status kesehatan container secara berkala
+HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://127.0.0.1:8000/api/tugas || exit 1
 
 EXPOSE 8000
 
