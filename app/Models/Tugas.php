@@ -17,4 +17,14 @@ class Tugas extends Model
     protected $casts = [
         'selesai' => 'boolean',
     ];
+
+    public function scopeSelesai($query)
+    {
+        return $query->where('selesai', true);
+    }
+
+    public function scopeBelumSelesai($query)
+    {
+        return $query->where('selesai', false);
+    }
 }

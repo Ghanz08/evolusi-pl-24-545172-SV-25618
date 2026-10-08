@@ -61,4 +61,16 @@ class TugasApiTest extends TestCase
                 'judul' => 'Tugas Spesifik',
             ]);
     }
+
+    public function test_can_filter_tugas_by_status(): void
+    {
+        Tugas::create(['judul' => 'Tugas Selesai A', 'selesai' => true]);
+        Tugas::create(['judul' => 'Tugas Belum Selesai B', 'selesai' => false]);
+
+        $response = $this->getJson('/api/tugas?selesai=true');
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['judul' => 'Tugas Selesai A'])
+            ->assertJsonMissing(['judul' => 'Tugas Belum Selesai B']);
+    }
 }

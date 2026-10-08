@@ -10,9 +10,15 @@ class TugasController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Tugas::latest()->get());
+        $query = Tugas::query();
+
+        if ($request->has('selesai')) {
+            $query->where('selesai', filter_var($request->query('selesai'), FILTER_VALIDATE_BOOLEAN));
+        }
+
+        return response()->json($query->latest()->get());
     }
 
     public function store(Request $request)
