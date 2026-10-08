@@ -45,4 +45,20 @@ class TugasApiTest extends TestCase
             'judul' => 'Tugas Baru',
         ]);
     }
+
+    public function test_can_get_single_tugas(): void
+    {
+        $tugas = Tugas::create([
+            'judul' => 'Tugas Spesifik',
+            'deskripsi' => 'Detail tugas spesifik',
+            'selesai' => true,
+        ]);
+
+        $response = $this->getJson('/api/tugas/' . $tugas->id);
+
+        $response->assertStatus(200)
+            ->assertJsonFragment([
+                'judul' => 'Tugas Spesifik',
+            ]);
+    }
 }

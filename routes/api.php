@@ -8,4 +8,6 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::apiResource('tugas', TugasController::class);
+Route::apiResource('tugas', TugasController::class)->parameters([
+    'tugas' => 'tugas',
+]);
