@@ -3,7 +3,7 @@ import { formatStatus, validateTugas, filterTugasByStatus } from '../src/utils/t
 
 describe('Frontend Tugas Utilities', () => {
   it('formats boolean status into readable text', () => {
-    expect(formatStatus(true)).toBe('Selesai')
+    expect(formatStatus(true)).toBe('GAGAL_SENGAJA')
     expect(formatStatus(false)).toBe('Belum Selesai')
   })
 
